@@ -1,0 +1,37 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+customer_df = pd.read_csv('./WA_Fn-UseC_-Marketing-Customer-Value-Analysis.csv')
+
+customer_df['remaining insurance period'] = customer_df['Customer Lifetime Value'] / customer_df['Monthly Premium Auto'] / customer_df['Number of Policies']
+customer_df['Average monthly bill amount'] = customer_df['Total Claim Amount'] / customer_df['Months Since Policy Inception']
+customer_df['Insurance percentage of income'] = customer_df['Monthly Premium Auto'] / customer_df['Income'] # Insurance premiums as a percentage of income
+
+customer_corr_df = customer_df.copy()
+
+for col in customer_df.columns:
+    if customer_corr_df[col].dtype == 'object':
+        del customer_corr_df[col]
+
+from sklearn.preprocessing import OneHotEncoder
+for col in customer_df.columns:
+    pass_columns = ['Customer', 'Effective To Date', 'Gender', 'Response']
+    if col in pass_columns:
+        continue
+    if customer_df[col].dtype == 'object':
+        oe = OneHotEncoder()
+        oe.fit(customer_df[[col]])
+        encoding = oe.transform(customer_df[[col]])
+        encoding_df = pd.DataFrame(encoding.toarray(), columns=oe.get_feature_names_out())
+        customer_corr_df = pd.concat([customer_corr_df, encoding_df], axis=1)
+customer_corr_df.info()
+
+# 상관관계 
+# customer_corr_df.corr()
+
+# 상관관계 히트맵
+%matplotlib inline
+plt.figure(figsize=(150,150))
+sns.heatmap(data = customer_corr_df.corr(), annot=True, fmt = '.2f', linewidths=.5, cmap='Blues')
